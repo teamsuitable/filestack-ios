@@ -27,7 +27,7 @@ class SourceTableViewController: UITableViewController {
   
   public override func viewDidLoad() {
     super.viewDidLoad()
-    navigationItem.rightBarButtonItem = cancelBarButton
+    //navigationItem.rightBarButtonItem = cancelBarButton
     
     // Try to obtain `Client` object from navigation controller
     if let navigationController = navigationController as? PickerNavigationController {
