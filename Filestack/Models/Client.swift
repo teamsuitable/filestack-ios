@@ -350,18 +350,6 @@ typealias CompletionHandler = (_ response: CloudResponse, _ safariError: Error?)
 
             if let authURL = response.authURL, let authRedirectURL = authRedirectURL {
                 DispatchQueue.main.async {
-<<<<<<< HEAD
-                    let completion: SFAuthenticationSession.CompletionHandler = { url, error in
-                        // Remove strong reference, so object can be deallocated.
-                        self.safariAuthSession = nil
-
-                        if let safariError = error {
-                            completionBlock(response, safariError)
-                        } else if let url = url, url.absoluteString.starts(with: authRedirectURL.absoluteString) {
-                            self.perform(request: request,
-                                         queue: queue,
-                                         completionBlock: completionBlock)
-=======
                     if #available(iOS 11, *) {
                         let safariAuthSession = SFAuthenticationSession(url: authURL,
                                                                         callbackURLScheme: self.config.appURLScheme,
@@ -389,7 +377,6 @@ typealias CompletionHandler = (_ response: CloudResponse, _ safariError: Error?)
                                                    request: request,
                                                    queue: queue,
                                                    completionBlock: completionBlock)
->>>>>>> parent of 2b7c416... Removing old auth flow code required for < iOS 11.
                         }
                     }
                 }
