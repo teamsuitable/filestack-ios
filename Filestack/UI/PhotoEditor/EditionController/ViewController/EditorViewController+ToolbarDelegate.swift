@@ -9,52 +9,82 @@
 import Foundation
 
 extension EditorViewController: EditorToolbarDelegate {
-  func cancelSelected() {
-    dismiss(animated: true) {
-      self.completion(nil)
+    func cancelSelected() {
+        dismiss(animated: true) {
+            self.completion?(nil)
+        }
     }
-  }
-  
-  func rotateSelected() {
-    editImage(to: currentImage.rotated(clockwise: false))
-    cropHandler.rotateCounterClockwise()
-    circleHandler.rotateCounterClockwise()
-  }
-  
-  func cropSelected() {
-    switch editMode {
-    case .crop: editMode = .none
-    case .circle, .none: editMode = .crop
+
+    func rotateSelected() {
+        perform(command: .rotate(clockwise: false))
+        cropHandler.rotateCounterClockwise()
+        circleHandler.rotateCounterClockwise()
     }
-  }
-  
-  func circleSelected() {
-    switch editMode {
-    case .circle: editMode = .none
-    case .crop, .none: editMode = .circle
+
+    func cropSelected() {
+        switch editMode {
+        case .crop: editMode = .none
+        case .circle, .none: editMode = .crop
+        }
     }
-  }
-  
-  func saveSelected() {
-    switch editMode {
-    case .crop: editImage(to: currentImage.cropped(by: cropHandler.actualEdgeInsets))
-    case .circle: editImage(to: currentImage.circled(center: circleHandler.actualCenter, radius: circleHandler.actualRadius))
-    case .none: return
+
+    func circleSelected() {
+        switch editMode {
+        case .circle: editMode = .none
+        case .crop, .none: editMode = .circle
+        }
     }
-    editMode = .none
-  }
-  
-  func doneSelected() {
-    dismiss(animated: true) {
-      self.completion(self.currentImage)
+
+    func saveSelected() {
+        switch editMode {
+        case .crop: perform(command: .crop(insets: cropHandler.actualEdgeInsets))
+        case .circle: perform(command: .circled(center: circleHandler.actualCenter, radius: circleHandler.actualRadius))
+        case .none: return
+        }
+
+        editMode = .none
     }
-  }
-  
-  func undoSelected() {
-    changeImage(to: currentImageIndex - 1)
-  }
-  
-  func redoSelected() {
-    changeImage(to: currentImageIndex + 1)
-  }
+
+    func doneSelected() {
+        dismiss(animated: true) {
+            let editedImage = self.editor?.editedImage.cgImageBackedCopy()
+            self.editor = nil
+            self.completion?(editedImage)
+        }
+    }
+
+    func undoSelected() {
+        perform(command: .undo)
+    }
+
+    func redoSelected() {
+        perform(command: .redo)
+    }
+
+    // MARK: - Private Functions
+
+    private func perform(command: ImageEditorCommand) {
+        guard let editor = editor else { return }
+
+        switch command {
+        case let .rotate(clockwise):
+            editor.rotate(clockwise: clockwise)
+        case let .crop(insets):
+            editor.crop(insets: insets)
+        case let .circled(center, radius):
+            editor.cropCircled(center: center, radius: radius)
+        case .undo:
+            editor.undo()
+        case .redo:
+            editor.redo()
+        case .reset:
+            editor.reset()
+        }
+
+        imageView.image = editor.editedImage
+        editMode = .none
+        cropHandler.reset()
+        circleHandler.reset()
+        topToolbar.setUndo(hidden: !editor.canUndo())
+    }
 }

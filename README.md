@@ -1,6 +1,6 @@
 # Filestack iOS SDK
 
-<a href="https://www.filestack.com"><img src="https://filestack.com/themes/filestack/assets/images/press-articles/color.svg" align="left" hspace="10" vspace="6"></a>
+<a href="https://www.filestack.com"><img src="https://www.filestack.com/docs/images/fs-logo-dark.svg" align="left" hspace="10" vspace="6"></a>
 This is the official Swift iOS for Filestack — API and content management system that makes it easy to add powerful file uploading and transformation capabilities to any web or mobile application.
 
 ## Resources
@@ -11,9 +11,9 @@ This is the official Swift iOS for Filestack — API and content management syst
 
 ## Requirements
 
-* Xcode 8.3 or later
-* Swift 3.2 / Objective-C
-* iOS 9 or later
+* Xcode 10.2 or later
+* Swift 4.2 up to 5.0 / Objective-C
+* iOS 11 or later
 
 ## Installing
 
@@ -27,11 +27,11 @@ To integrate Filestack into your Xcode project using CocoaPods, specify it in yo
 
 ```
 source 'https://github.com/CocoaPods/Specs.git'
-platform :ios, '9.0'
+platform :ios, '11.0'
 use_frameworks!
 
 target '<Your Target Name>' do
-    pod 'Filestack', '~> 1.5'
+    pod 'Filestack', '~> 2.0'
 end
 ```
 
@@ -52,9 +52,9 @@ $ brew install carthage
 
 To integrate Filestack into your Xcode project using Carthage, specify it in your `Cartfile`:
 
-`github "filestack/filestack-ios" ~> 1.5`
+`github "filestack/filestack-ios" ~> 2.0`
 
-Run `carthage update` to build the framework and drag the built `Filestack.framework` into your Xcode project. Additionally, add `Filestack.framework`, `FilestackSDK.framework`, `Alamofire.framework`, `CryptoSwift.framework`, and `ZipArchive.framework` to the embedded frameworks build phase of your app's target.
+Run `carthage update` to build the framework and drag the built `Filestack.framework` into your Xcode project. Additionally, add `Filestack.framework`, `FilestackSDK.framework`, `Alamofire.framework`, `CryptoSwift.framework`, `SVProgressHUD.framework`, and `ZipArchive.framework` to the embedded frameworks build phase of your app's target.
 
 ### Manually
 
@@ -72,6 +72,7 @@ $ git submodule add https://github.com/filestack/filestack-swift.git
 $ git submodule add https://github.com/Alamofire/Alamofire.git
 $ git submodule add https://github.com/krzyzanowskim/CryptoSwift.git
 $ git submodule add https://github.com/ZipArchive/ZipArchive.git
+$ git submodule add https://github.com/SVProgressHUD/SVProgressHUD.git
 ```
 
 Open the new `filestack-ios` folder, and drag the `Filestack.xcodeproj` into the Project Navigator of your application's Xcode project.
@@ -85,7 +86,7 @@ In the tab bar at the top of that window, open the "General" panel.
 
 Click on the + button under the "Embedded Binaries" section and choose the `Filestack.framework` for iOS.
 
-Repeat the same process for adding `Alamofire`, `CryptoSwift`, `FilestackSDK`, and `ZipArchive` dependent frameworks.
+Repeat the same process for adding `Alamofire`, `CryptoSwift`, `FilestackSDK`, `SVProgressHUD`, and `ZipArchive` dependent frameworks.
 
 ## Usage
 
@@ -225,13 +226,6 @@ Remember also to add this piece of code to your `AppDelegate` so the auth flow c
 func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
 
     if url.scheme == "YOUR-APP-URL-SCHEME" && url.host == "Filestack" {
-        if #available(iOS 11.0, *) {
-            // NO-OP
-        } else {
-            NotificationCenter.default.post(name: Filestack.Client.resumeCloudRequestNotification,
-                                            object: url)
-        }
-
         return true
     }
 
@@ -296,7 +290,7 @@ guard let security = try? Security(policy: policy, appSecret: "YOUR-APP-SECRET-H
 ```swift
 // Create `Config` object.
 // IMPORTANT: - Make sure to assign an app scheme URL that matches the one(s) configured in your info.plist
-let config = Filestack.Config()
+let config = Filestack.Config.builder
   .with(appUrlScheme: "YOUR-APP-URL-SCHEME")
   .with(videoQuality: .typeHigh)
   .with(imageUrlExportPreset: .current)
@@ -304,6 +298,7 @@ let config = Filestack.Config()
   .withEditorEnabled()
   .with(availableCloudSources: [.dropbox, .googledrive, .googlephotos, .customSource])
   .with(availableLocalSources: [.camera])
+  .build()
 ```
 
 #### 3. Setting up Client object
@@ -374,13 +369,6 @@ Finally, remember that you'll need this piece of code in your `AppDelegate` for 
 func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
 
     if url.scheme == "YOUR-APP-URL-SCHEME" && url.host == "Filestack" {
-        if #available(iOS 11.0, *) {
-            // NO-OP
-        } else {
-            NotificationCenter.default.post(name: Filestack.Client.resumeCloudRequestNotification,
-                                            object: url)
-        }
-
         return true
     }
 

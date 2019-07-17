@@ -6,25 +6,20 @@
 //  Copyright © 2017 Filestack. All rights reserved.
 //
 
-import UIKit
+import AVFoundation.AVAssetExportSession
 import Filestack
 import FilestackSDK
-import AVFoundation.AVAssetExportSession
-
+import UIKit
 
 // Set your Filestack's API key here.
 private let filestackAPIKey = "YOUR-FILESTACK-API-KEY"
 // Set your Filestack's app secret here.
 private let filestackAppSecret = "YOUR-FILESTACK-APP-SECRET"
 
-
 class ViewController: UIViewController {
+    @IBOutlet var pickerButton: UIButton!
 
-    @IBOutlet weak var pickerButton: UIButton!
-
-
-    override func present(_ viewControllerToPresent: UIViewController, animated flag: Bool, completion: (() -> Void)? = nil) {
-
+    override func present(_ viewControllerToPresent: UIViewController, animated _: Bool, completion: (() -> Void)? = nil) {
         // On the iPad, present the picker as a popover — this is totally optional.
         if let viewController = viewControllerToPresent as? PickerNavigationController {
             viewController.modalPresentationStyle = .popover
@@ -36,13 +31,10 @@ class ViewController: UIViewController {
     }
 
     override func viewDidLoad() {
-
         super.viewDidLoad()
     }
 
-
-    @IBAction func presentPicker(_ sender: AnyObject) {
-
+    @IBAction func presentPicker(_: AnyObject) {
         // In case your Filestack account has security enabled, you will need to instantiate a `Security` object.
         // We can do this by either configuring a `Policy` and instantiating a `Security` object by passing
         // the `Policy` and an `appSecret`, or by instantiating a `Security` object directly by passing an already
@@ -95,11 +87,18 @@ class ViewController: UIViewController {
         config.availableCloudSources = CloudSource.all()
 
         // Here you can decide what document types can be picked when using Apple's document picker.
-        // In our example we use ["public.item"], which means we allow picking any files or bundles.
-        // Please notice that this is already the default value in the client's config object.
-        //
-        // For a comprehensive list of UTIs, please consult [System-Declared Uniform Type Identifiers](https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html#//apple_ref/doc/uid/TP40009259-SW1)
         config.documentPickerAllowedUTIs = ["public.item"]
+        // In the same fashion, you can decide what document types can be picked from cloud sources.
+        config.cloudSourceAllowedUTIs = ["public.item"]
+        //
+        // In both cases we have used ["public.item"], which means we allow picking any files or bundles.
+        // For instance, if you wanted to *only* allow picking images, videos, and audios, you would instead use:
+        //
+        //   config.documentPickerAllowedUTIs = ["public.image", "public.video", "public.audio"]
+        //   config.cloudSourceAllowedUTIs = ["public.image", "public.video", "public.audio"]
+        //
+        // For a comprehensive list of UTIs, please consult:
+        //   https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html#//apple_ref/doc/uid/TP40009259-SW1
 
         // Instantiate the Filestack `Client` by passing an API key obtained from [Filestack Developer Portal](https://dev.filestack.com/),
         // together with a `Security` and `Config` object.
@@ -122,9 +121,8 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: PickerNavigationControllerDelegate {
-
-    func pickerStoredFile(picker: PickerNavigationController, response: StoreResponse) {
-
+    /// Called when the picker finishes storing a file originating from a cloud source in the destination storage location.
+    func pickerStoredFile(picker _: PickerNavigationController, response: StoreResponse) {
         if let contents = response.contents {
             // Our cloud file was stored into the destination location.
             print("Stored file response: \(contents)")
@@ -134,14 +132,21 @@ extension ViewController: PickerNavigationControllerDelegate {
         }
     }
 
-    func pickerUploadedFile(picker: PickerNavigationController, response: NetworkJSONResponse?) {
-
-        if let contents = response?.json {
-            // Our local file was stored into the destination location.
-            print("Uploaded file response: \(contents)")
-        } else if let error = response?.error {
-            // The upload operation failed.
-            print("Error uploading file: \(error)")
+    /// Called when the picker finishes uploading a file originating from the local device in the destination storage location.
+    func pickerUploadedFiles(picker _: PickerNavigationController, responses: [NetworkJSONResponse]) {
+        for response in responses {
+            if let contents = response.json {
+                // Our local file was stored into the destination location.
+                print("Uploaded file response: \(contents)")
+            } else if let error = response.error {
+                // The upload operation failed.
+                print("Error uploading file: \(error)")
+            }
         }
+    }
+
+    /// Called when the picker reports progress during a file or set of files being uploaded.
+    func pickerReportedUploadProgress(picker: PickerNavigationController, progress: Float) {
+        print("Picker \(picker) reported upload progress: \(progress)")
     }
 }

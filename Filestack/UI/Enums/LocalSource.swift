@@ -8,12 +8,8 @@
 
 import Foundation
 
-
-/**
-    Represents a type of local source to be used in the picker.
- */
-@objc(FSLocalSource) public enum LocalSource: UInt {
-
+/// :nodoc:
+@objc(FSLocalProvider) public enum LocalProvider: UInt {
     /// Camera
     case camera
 
@@ -24,56 +20,41 @@ import Foundation
     case documents
 }
 
-extension LocalSource: CustomStringConvertible, CellDescriptibleSource {
+/**
+ Represents a type of local source to be used in the picker.
+ */
+@objc(FSLocalSource) public class LocalSource: NSObject, CellDescriptibleSource {
+    let provider: LocalProvider
+    let iconImage: UIImage
+    let textDescription: String
+
+    public init(description: String, image: UIImage, provider: LocalProvider) {
+        textDescription = description
+        iconImage = image
+        self.provider = provider
+    }
+
+    /// Camera
+    public static var camera = LocalSource(description: "Camera",
+                                           image: .templatedFilestackImage("icon-camera"),
+                                           provider: .camera)
+
+    /// Photo Library
+    public static var photoLibrary = LocalSource(description: "Photo Library",
+                                                 image: .templatedFilestackImage("icon-photolibrary"),
+                                                 provider: .photoLibrary)
+
+    /// Documents
+    public static var documents = LocalSource(description: "iOS Files",
+                                              image: .templatedFilestackImage("icon-documents"),
+                                              provider: .documents)
 
     /// Returns all the supported sources.
     public static func all() -> [LocalSource] {
-
         return [.camera, .photoLibrary, .documents]
     }
 
     static func title() -> String {
-
         return "Local"
-    }
-
-    var iconName: String {
-
-        switch self {
-        case .camera:
-
-            return "icon-camera"
-
-        case .photoLibrary:
-
-            return "icon-photolibrary"
-
-        case .documents:
-
-            return "icon-documents"
-
-        }
-    }
-
-
-    // MARK: - CustomStringConvertible
-
-    /// Returns a `String` representation of self.
-    public var description: String {
-
-        switch self {
-        case .camera:
-
-            return "Camera"
-
-        case .photoLibrary:
-
-            return "Photo Library"
-
-        case .documents:
-
-            return "iOS Files"
-
-        }
     }
 }
