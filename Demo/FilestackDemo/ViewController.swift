@@ -6,114 +6,38 @@
 //  Copyright © 2017 Filestack. All rights reserved.
 //
 
-import AVFoundation.AVAssetExportSession
 import Filestack
 import FilestackSDK
 import UIKit
-
-// Set your Filestack's API key here.
-private let filestackAPIKey = "YOUR-FILESTACK-API-KEY"
-// Set your Filestack's app secret here.
-private let filestackAppSecret = "YOUR-FILESTACK-APP-SECRET"
 
 class ViewController: UIViewController {
     @IBOutlet var pickerButton: UIButton!
 
     override func present(_ viewControllerToPresent: UIViewController, animated _: Bool, completion: (() -> Void)? = nil) {
-        // On the iPad, present the picker as a popover — this is totally optional.
         if let viewController = viewControllerToPresent as? PickerNavigationController {
-            viewController.modalPresentationStyle = .popover
-            viewController.popoverPresentationController?.sourceView = pickerButton
-            viewController.popoverPresentationController?.sourceRect = pickerButton.bounds
+            viewController.modalPresentationStyle = .pageSheet
+            // If using `popover`, set `sourceView` and `sourceRect` to the control the popover should be anchored to.
+            // viewController.popoverPresentationController?.sourceView = pickerButton
+            // viewController.popoverPresentationController?.sourceRect = pickerButton.bounds
         }
 
         super.present(viewControllerToPresent, animated: true, completion: completion)
     }
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-    }
-
     @IBAction func presentPicker(_: AnyObject) {
-        // In case your Filestack account has security enabled, you will need to instantiate a `Security` object.
-        // We can do this by either configuring a `Policy` and instantiating a `Security` object by passing
-        // the `Policy` and an `appSecret`, or by instantiating a `Security` object directly by passing an already
-        // encoded policy together with its corresponding signature — in this example, we will use the 1st method.
+        guard let client = client else { return }
 
-        // Create `Policy` object with an expiry time and call permissions.
-        let policy = Policy(expiry: .distantFuture,
-                            call: [.pick, .read, .stat, .write, .writeURL, .store, .convert, .remove, .exif])
+        // Upload options for any uploaded files.
+        let uploadOptions: UploadOptions = .defaults
+        // Store options for any uploaded files.
+        uploadOptions.storeOptions = StorageOptions(location: .s3, access: .public)
 
-        // Create `Security` object based on our previously created `Policy` object and app secret obtained from
-        // [Filestack Developer Portal](https://dev.filestack.com/).
-        guard let security = try? Security(policy: policy, appSecret: filestackAppSecret) else {
-            fatalError("Unable to instantiate Security object.")
-        }
-
-        // Create `Config` object.
-        let config = Filestack.Config()
-
-        // IMPORTANT: - Make sure to assign an app scheme URL that matches the one(s) configured in your info.plist.
-        // In our demo this is "filestackdemo".
-        config.appURLScheme = appURLScheme
-
-        // Video quality for video recording (and sometimes exporting.)
-        config.videoQuality = .typeHigh
-
-        if #available(iOS 11.0, *) {
-            // On iOS 11, you can export images in HEIF or JPEG by setting this value to `.current` or `.compatible`
-            // respectively.
-            // Here we state we prefer HEIF for image export.
-            config.imageURLExportPreset = .current
-            // On iOS 11, you can decide what format and quality will be used for exported videos.
-            // Here we state we want to export HEVC at the highest quality.
-            config.videoExportPreset = AVAssetExportPresetHEVCHighestQuality
-        }
-
-        // Here you can enumerate the available local sources for the picker.
-        // If you simply want to enumerate all the local sources, you may use `LocalSource.all()`, but if you would
-        // like to enumerate, let's say the camera source only, you could set it like this:
-        //
-        //   config.availableLocalSources = [.camera]
-        //
-        config.availableLocalSources = LocalSource.all()
-
-        // Here you can enumerate the available cloud sources for the picker.
-        // If you simply want to enumerate all the cloud sources, you may use `CloudSource.all()`, but if you would
-        // like to enumerate selected cloud sources, you could set these like this:
-        //
-        //   config.availableCloudSources = [.dropbox, .googledrive, .googlephotos, .customSource]
-        //
-        config.availableCloudSources = CloudSource.all()
-
-        // Here you can decide what document types can be picked when using Apple's document picker.
-        config.documentPickerAllowedUTIs = ["public.item"]
-        // In the same fashion, you can decide what document types can be picked from cloud sources.
-        config.cloudSourceAllowedUTIs = ["public.item"]
-        //
-        // In both cases we have used ["public.item"], which means we allow picking any files or bundles.
-        // For instance, if you wanted to *only* allow picking images, videos, and audios, you would instead use:
-        //
-        //   config.documentPickerAllowedUTIs = ["public.image", "public.video", "public.audio"]
-        //   config.cloudSourceAllowedUTIs = ["public.image", "public.video", "public.audio"]
-        //
-        // For a comprehensive list of UTIs, please consult:
-        //   https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html#//apple_ref/doc/uid/TP40009259-SW1
-
-        // Instantiate the Filestack `Client` by passing an API key obtained from [Filestack Developer Portal](https://dev.filestack.com/),
-        // together with a `Security` and `Config` object.
-        // If your account does not have security enabled, then you can omit this parameter or set it to `nil`.
-        let client = Filestack.Client(apiKey: filestackAPIKey, security: security, config: config)
-
-        // Store options for your uploaded files.
-        // Here we are saying our storage location is S3 and access for uploaded files should be public.
-        let storeOptions = StorageOptions(location: .s3, access: .public)
-
-        // Instantiate picker by passing the `StorageOptions` object we just set up.
-        let picker = client.picker(storeOptions: storeOptions)
-
+        // Instantiate picker using a custom `StorageOptions` object.
+        let picker = client.picker(storeOptions: uploadOptions.storeOptions)
         // Optional. Set the picker's delegate.
         picker.pickerDelegate = self
+        // Optional. Set the picker's behavior (see `PickerBehavior` for more details.)
+        picker.behavior = .uploadAndStore(uploadOptions: uploadOptions)
 
         // Finally, present the picker on the screen.
         present(picker, animated: true)
@@ -121,26 +45,55 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: PickerNavigationControllerDelegate {
-    /// Called when the picker finishes storing a file originating from a cloud source in the destination storage location.
-    func pickerStoredFile(picker _: PickerNavigationController, response: StoreResponse) {
-        if let contents = response.contents {
-            // Our cloud file was stored into the destination location.
-            print("Stored file response: \(contents)")
-        } else if let error = response.error {
-            // The store operation failed.
-            print("Error storing file: \(error)")
+    /// Called when the picker finishes picking files originating from the local device.
+    func pickerPickedFiles(picker: PickerNavigationController, fileURLs: [URL]) {
+        switch picker.behavior {
+        case .storeOnly:
+            // IMPORTANT: Copy, move, or access the contents of the returned files at this point while they are still available.
+            // Once this delegate function call returns, all the files will be automatically removed.
+
+            // Dismiss the picker since we have finished picking files from the local device, and, in `storeOnly` mode,
+            // there's no upload phase.
+            DispatchQueue.main.async {
+                self.presentedViewController?
+                    .presentAlert(titled: "Success", message: "Finished picking files: \(fileURLs)")
+            }
+        default:
+            break
         }
     }
 
-    /// Called when the picker finishes uploading a file originating from the local device in the destination storage location.
-    func pickerUploadedFiles(picker _: PickerNavigationController, responses: [NetworkJSONResponse]) {
-        for response in responses {
-            if let contents = response.json {
-                // Our local file was stored into the destination location.
-                print("Uploaded file response: \(contents)")
-            } else if let error = response.error {
-                // The upload operation failed.
-                print("Error uploading file: \(error)")
+    /// Called when the picker finishes uploading files originating from the local device to the storage destination.
+    func pickerUploadedFiles(picker: PickerNavigationController, responses: [JSONResponse]) {
+        // IMPORTANT: Copy, move, or access the contents of the returned files at this point while they are still available.
+        // Once this delegate function call returns, all the files will be automatically removed.
+        //
+        // Every `JSONResponse` entry contains a `context` property with the file URL that was uploaded, and you may
+        // get all the file URLs like this:
+        let fileURLs = responses.compactMap { $0.context as? URL }
+
+        print("Uploaded file URLs: \(fileURLs)")
+
+        // Dismiss the picker since we finished uploading picked files.
+        DispatchQueue.main.async {
+            let handles = responses.compactMap { $0.json?["handle"] as? String }
+
+            if !handles.isEmpty {
+                let joinedHandles = handles.joined(separator: ", ")
+
+                self.presentedViewController?
+                    .presentAlert(titled: "Success",
+                                  message: "Finished uploading files with handles: \(joinedHandles)")
+            }
+        }
+    }
+
+    /// Called when the picker finishes storing a file originating from a cloud source into the storage destination.
+    func pickerStoredFile(picker: PickerNavigationController, response: StoreResponse) {
+        if let handle = response.contents?["handle"] as? String {
+            DispatchQueue.main.async {
+                self.presentedViewController?
+                    .presentAlert(titled: "Success", message: "Finished storing file with handle: \(handle)")
             }
         }
     }
@@ -148,5 +101,10 @@ extension ViewController: PickerNavigationControllerDelegate {
     /// Called when the picker reports progress during a file or set of files being uploaded.
     func pickerReportedUploadProgress(picker: PickerNavigationController, progress: Float) {
         print("Picker \(picker) reported upload progress: \(progress)")
+    }
+
+    /// Called after the picker was dismissed.
+    func pickerWasDismissed(picker: PickerNavigationController) {
+        print("Picker \(picker) was dismissed.")
     }
 }

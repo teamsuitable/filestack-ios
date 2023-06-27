@@ -30,13 +30,15 @@ extension CloudSourceDataSource {
     // Based on user config, can `item` be selected?
     func canSelect(item: CloudItem) -> Bool {
         let config = client.config
-
         if item.isFolder || config.cloudSourceAllowedUTIs.isEmpty {
             return true
         }
-
         guard let uti = item.name.UTI else { return false }
-
+        // hard code a restriction for "plain text" UTI to prevent google docs from being picked..
+        // This is a workaround to prevent cryptic error when picking google doc files.
+        if UTTypeConformsTo(uti, "public.plain-text" as CFString) {
+            return false
+        }
         // Try to find at least an UTI in `cloudSourceAllowedUTIs` that comforms to our item's UTI,
         // or return false if none match.
         for allowedUTI in config.cloudSourceAllowedUTIs {
@@ -44,7 +46,6 @@ extension CloudSourceDataSource {
                 return true
             }
         }
-
         return false
     }
 }

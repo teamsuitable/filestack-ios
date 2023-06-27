@@ -1,0 +1,34 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "FilestackSDK",
+        "repositoryURL": "https://github.com/filestack/filestack-swift.git",
+        "state": {
+          "branch": null,
+          "revision": "5ba0ac9ca2fb53ccf18335b1654b8cc600785b66",
+          "version": "2.8.0"
+        }
+      },
+      {
+        "package": "OHHTTPStubs",
+        "repositoryURL": "https://github.com/AliSoftware/OHHTTPStubs.git",
+        "state": {
+          "branch": null,
+          "revision": "e92b5a5746ef16add2a1424f1fc19529d9a75cde",
+          "version": "9.0.0"
+        }
+      },
+      {
+        "package": "ZIPFoundation",
+        "repositoryURL": "https://github.com/weichsel/ZIPFoundation",
+        "state": {
+          "branch": null,
+          "revision": "cf10bbff6ac3b873e97b36b9784c79866a051a8e",
+          "version": "0.9.12"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

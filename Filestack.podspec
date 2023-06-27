@@ -9,11 +9,12 @@ Pod::Spec.new do |spec|
 
   spec.ios.deployment_target  = '11.0'
 
-  spec.source_files = 'Filestack/**/*.{h,swift}'
-  spec.resources = ["Filestack/UI/*.storyboard", "Filestack/Resources/*.xcassets"]
+  spec.source_files = 'Sources/Filestack/**/*.{h,swift}'
+  spec.resources = ["Sources/Filestack/Resources/*.{storyboard,xcassets}"]
+  spec.public_header_files = 'Sources/**/*.h'
 
-  spec.dependency 'Alamofire', '~> 4.8'
-  spec.dependency 'FilestackSDK', '~> 2.2.2'
-  spec.dependency 'SSZipArchive', '2.2.2'
-  spec.dependency 'SVProgressHUD', '~> 2.2'
+  spec.swift_versions = [4.2, 5.2]
+
+  spec.dependency 'FilestackSDK', '~> 2.8.0'
+  spec.dependency 'ZIPFoundation', '0.9.11'
 end
