@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-Version 2.8.6 *(2021-11-03)*
+Version 2.8.7 *(2021-11-03)*
 ----------------------------
 
 - Fix wrong image orientation on exported HEIC images.
