@@ -334,6 +334,12 @@ internal class CloudSourceTabBarController: UITabBarController, CloudSourceDataS
         // Store view type in user defaults
         UserDefaults.standard.set(cloudSourceViewType: viewType)
     }
+    
+    @IBAction func goBack() {
+        DispatchQueue.main.async { () -> Void in
+            self.navigationController?.popToRootViewController(animated: true)
+        }
+    }
 
     @IBAction func logout(_: Any) {
         client.logout(provider: source.provider) { response in
@@ -346,7 +352,7 @@ internal class CloudSourceTabBarController: UITabBarController, CloudSourceDataS
 
                 self.present(alert, animated: true)
             } else {
-                self.navigationController?.popToRootViewController(animated: true)
+                self.goBack()
             }
         }
     }
