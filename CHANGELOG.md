@@ -1,7 +1,12 @@
 Change Log
-==========
+=========
 
 Version 2.8.8 *(2021-11-03)*
+----------------------------
+
+- Fix navigation bug by calling navigation action off of main thread
+
+Version 2.8.7 *(2021-11-03)*
 ----------------------------
 
 - Fix wrong image orientation on exported HEIC images.
